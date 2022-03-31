@@ -63,7 +63,23 @@ def policy_evaluation(P, nS, nA, policy, gamma=0.9, tol=1e-3):
 
 	############################
 
-	# YOUR IMPLEMENTATION HERE #
+	value_function_ = value_function.copy()
+
+	while True:
+		for s in range(nS):
+			a = policy[s]
+
+			val = 0
+			for prob, s_, r, done in P[s][a]:
+				val += prob * (r + gamma * value_function[s_])
+
+			value_function_[s] = val
+
+		if np.abs(np.max(value_function_ - value_function)) < tol:
+			break
+		else:
+			# 将最新的 value_function_ 赋值给 value_function
+			value_function = value_function_.copy()
 
 	############################
 	return value_function
@@ -93,7 +109,14 @@ def policy_improvement(P, nS, nA, value_from_policy, policy, gamma=0.9):
 
 	############################
 
-	# YOUR IMPLEMENTATION HERE #
+	for s in range(nS):
+		action_val = np.zeros(nA)
+		for a in range(nA):
+			val = 0
+			for prob, s_, r, done in P[s][a]:
+				val += prob * (r + gamma * value_from_policy[s_])
+			action_val[a] = val
+		new_policy[s] = np.argmax(action_val)
 
 	############################
 	return new_policy
@@ -122,7 +145,17 @@ def policy_iteration(P, nS, nA, gamma=0.9, tol=10e-3):
 
 	############################
 
-	# YOUR IMPLEMENTATION HERE #
+	while True:
+		# policy evaluation
+		value_function = policy_evaluation(P, nS, nA, policy, gamma, tol)
+
+		# policy improvement
+		new_policy = policy_improvement(P, nS, nA, value_function, policy, gamma)
+
+		if np.all(policy == new_policy):
+			break
+		else:
+			policy = new_policy.copy()
 
 	############################
 	return value_function, policy
@@ -150,7 +183,31 @@ def value_iteration(P, nS, nA, gamma=0.9, tol=1e-3):
 	policy = np.zeros(nS, dtype=int)
 	############################
 
-	# YOUR IMPLEMENTATION HERE #
+	# 用于记录更新之后的value_function
+	value_function_ = value_function.copy()
+
+	# 价值迭代
+	while True:
+		# 依次更新每个状态的最优价值
+		for s in range(nS):
+			# 计算每个动作的价值
+			action_values = np.zeros(nA)
+			for a in range(nA):
+				state_value = 0
+				for prob, s_, r, done in P[s][a]:
+					state_value += prob * (r + gamma * value_function[s_])
+				action_values[a] = state_value
+				# 选出最优的动作，更新 value_function_ 以及 policy
+				action_star = np.argmax(action_values)
+				value_function_[s] = action_values[action_star]
+				policy[s] = action_star
+
+		# stopping tolerance
+		if np.abs(np.max(value_function_ - value_function)) < tol:
+			break
+		else:
+			# 将最新的 value_function_ 赋值给 value_function
+			value_function = value_function_.copy()
 
 	############################
 
