@@ -30,7 +30,11 @@ def update():
             '''
             ############################
 
-            # YOUR IMPLEMENTATION HERE #
+            s = str(observation)
+
+            RL.check_state_exist(s)
+
+            action = RL.choose_action(s)
 
             ############################
 
@@ -44,7 +48,7 @@ def update():
             '''
             ############################
 
-            # YOUR IMPLEMENTATION HERE #
+            RL.learn(s, action, reward, str(observation_))
 
             ############################
 
@@ -70,7 +74,8 @@ if __name__ == "__main__":
     '''
     ############################
 
-    # YOUR IMPLEMENTATION HERE #
+    RL = QLearning(actions=list(range(env.n_actions)))
+    # RL = Sarsa(actions=list(range(env.n_actions)))
 
     ############################
 

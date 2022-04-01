@@ -13,7 +13,7 @@ class QLearning:
         ''' build q table'''
         ############################
 
-        # YOUR IMPLEMENTATION HERE #
+        self.q_table = pd.DataFrame(columns=self.actions)
 
         ############################
 
@@ -21,7 +21,15 @@ class QLearning:
         ''' choose action from q table '''
         ############################
 
-        # YOUR IMPLEMENTATION HERE #
+        series = pd.Series(self.q_table.loc[observation])
+
+        if np.random.random() < self.epsilon:
+            action = np.random.choice(self.actions)
+        else:
+            action = series.argmax()
+            action = series.index[action]
+
+        return action
 
         ############################
 
@@ -29,7 +37,12 @@ class QLearning:
         ''' update q table '''
         ############################
 
-        # YOUR IMPLEMENTATION HERE #
+        self.check_state_exist(s_)
+        q_s = self.q_table.loc[s, a]
+        q_s_ = self.q_table.loc[s_, :].max()
+        td_error = q_s - r - self.gamma * q_s_
+        q_ = q_s - self.lr * td_error
+        self.q_table.loc[s, a] = q_
 
         ############################
 
@@ -37,6 +50,7 @@ class QLearning:
         ''' check state '''
         ############################
 
-        # YOUR IMPLEMENTATION HERE #
+        if state not in self.q_table.index:
+            self.q_table.loc[state] = pd.Series(np.zeros(len(self.actions)), index=self.actions)
 
         ############################
