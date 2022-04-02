@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 
@@ -13,7 +12,7 @@ class QLearning:
         ''' build q table'''
         ############################
 
-        self.q_table = pd.DataFrame(columns=self.actions)
+        self.q_table = pd.DataFrame(columns=self.actions, dtype=np.float64)
 
         ############################
 
@@ -21,11 +20,12 @@ class QLearning:
         ''' choose action from q table '''
         ############################
 
-        series = pd.Series(self.q_table.loc[observation])
+        self.check_state_exist(observation)
 
         if np.random.random() < self.epsilon:
             action = np.random.choice(self.actions)
         else:
+            series = pd.Series(self.q_table.loc[observation])
             action = series.argmax()
             action = series.index[action]
 
@@ -39,10 +39,12 @@ class QLearning:
 
         self.check_state_exist(s_)
         q_s = self.q_table.loc[s, a]
-        q_s_ = self.q_table.loc[s_, :].max()
-        td_error = q_s - r - self.gamma * q_s_
-        q_ = q_s - self.lr * td_error
-        self.q_table.loc[s, a] = q_
+        if s_ == 'terminal':
+            q_s_ = 0
+        else:
+            q_s_ = self.q_table.loc[s_, :].max()
+        td_error = r + self.gamma * q_s_ - q_s
+        self.q_table.loc[s, a] = q_s + self.lr * td_error
 
         ############################
 
