@@ -13,9 +13,9 @@ def dqn_arguments(parser):
     parser.add_argument("--hidden_size", default=512, type=int)
     parser.add_argument("--buffer_size", default=int(1e6), type=int)
     parser.add_argument("--lr", default=0.00025, type=float)
-    parser.add_argument("--batch_size", default=64, type=int)
+    parser.add_argument("--batch_size", default=32, type=int)
     parser.add_argument("--gamma", default=0.99, type=float)
-    parser.add_argument("--grad_norm_clip", default=10, type=float)
+    parser.add_argument("--grad_norm_clip", default=0.5, type=float)
 
     parser.add_argument("--test", default=False, type=bool)
     parser.add_argument("--use_cuda", default=True, type=bool)

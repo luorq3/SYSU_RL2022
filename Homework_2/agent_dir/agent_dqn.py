@@ -230,7 +230,7 @@ class AgentDQN(Agent):
                 episodic_len = 0
                 episodic_return = 0
 
-            self.replay_buffer.push(obs, action, reward, next_obs.copy())
+            self.replay_buffer.push(obs, action, reward, next_obs.copy(), done)
             obs = next_obs
 
             if global_step > self.learning_starts and global_step % self.learning_freq == 0:
