@@ -11,7 +11,7 @@ def dqn_arguments(parser):
 
     parser.add_argument("--seed", default=11037, type=int)
     parser.add_argument("--hidden_size", default=512, type=int)
-    parser.add_argument("--buffer_size", default=int(1e6), type=int)
+    parser.add_argument("--buffer_size", default=int(10000), type=int)
     parser.add_argument("--lr", default=0.00025, type=float)
     parser.add_argument("--batch_size", default=32, type=int)
     parser.add_argument("--gamma", default=0.99, type=float)
@@ -29,7 +29,7 @@ def dqn_arguments(parser):
     parser.add_argument("--end-e", default=0.01, type=float)
     parser.add_argument("--exploration_fraction", default=0.4, type=float)
     # Off-policy learning begin step
-    parser.add_argument("--learning_starts", default=50000, type=int)
+    parser.add_argument("--learning_starts", default=10000, type=int)
 
     return parser
 

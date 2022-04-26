@@ -42,10 +42,9 @@ class ReplayBuffer:
         self.buffer_size = buffer_size
 
         self.obs_shape = observation_space.shape
-        self.action_dim = action_space.n
 
         self.observations = np.zeros((self.buffer_size,) + self.obs_shape, dtype=observation_space.dtype)
-        self.actions = np.zeros((self.buffer_size, self.action_dim), dtype=action_space.dtype)
+        self.actions = np.zeros(self.buffer_size, dtype=action_space.dtype)
         self.rewards = np.zeros(self.buffer_size, dtype=np.float32)
         self.next_observations = np.zeros((self.buffer_size,) + self.obs_shape, dtype=observation_space.dtype)
         self.dones = np.zeros(self.buffer_size, dtype=np.float32)
@@ -83,10 +82,10 @@ class ReplayBuffer:
 
         data = (
             self.observations[batch_idx, :],
-            self.actions[batch_idx, :],
-            self.rewards[batch_idx, :],
+            self.actions[batch_idx],
+            self.rewards[batch_idx],
             self.next_observations[batch_idx, :],
-            self.dones[batch_idx, :]
+            self.dones[batch_idx]
         )
 
         return [torch.tensor(d).to(self.device) for d in data]
