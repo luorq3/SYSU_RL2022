@@ -229,8 +229,11 @@ class AgentDQN(Agent):
                 episodic_len = 0
                 episodic_return = 0
 
+                obs = self.env.reset()
+            else:
+                obs = next_obs
+
             self.replay_buffer.push(obs, action, reward, next_obs.copy(), done)
-            obs = next_obs
 
             if global_step > self.learning_starts and global_step % self.learning_freq == 0:
                 self.train(global_step)
