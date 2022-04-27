@@ -1,12 +1,10 @@
 import os
 import random
-import copy
-import time
+from datetime import datetime
 
 import numpy as np
 import torch
 import torch.nn.functional as F
-from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 from torch import nn, optim
 from agent_dir.agent import Agent
@@ -106,7 +104,8 @@ class AgentDQN(Agent):
         """
         super(AgentDQN, self).__init__(env)
         ##################
-        self.run_name = f"{args.env_name}_dqn_{int(time.time())}"
+        str_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        self.run_name = f"{args.env_name}_dqn_{str_time}"
         self.log_dir = f'logs/{self.run_name}'
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
@@ -131,7 +130,7 @@ class AgentDQN(Agent):
         torch.manual_seed(args.seed)
 
         self.q_network = QNetwork(args.hidden_size, env.action_space.n).to(self.device)
-        self.optimizer = torch.optim.Adam(self.q_network.parameters(), lr=args.lr)
+        self.optimizer = optim.Adam(self.q_network.parameters(), lr=args.lr)
         self.target_network = QNetwork(args.hidden_size, env.action_space.n).to(self.device)
         self.target_network.load_state_dict(self.q_network.state_dict())
 
