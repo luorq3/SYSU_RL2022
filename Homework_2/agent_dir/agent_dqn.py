@@ -179,16 +179,18 @@ class AgentDQN(Agent):
 
         ##################
 
-    def make_action(self, obs, global_step, test=True):
+    def make_action(self, obs, global_step, test=False):
         """
         Return predicted action of your agent
         Input:observation
         Return:action
         """
         ##################
-
-        slope = (self.end_e - self.start_e) / self.exploration_step
-        epsilon = max(slope * global_step + self.start_e, self.end_e)
+        if test:
+            epsilon = self.end_e
+        else:
+            slope = (self.end_e - self.start_e) / self.exploration_step
+            epsilon = max(slope * global_step + self.start_e, self.end_e)
 
         if random.random() < epsilon:
             action = self.env.action_space.sample()
