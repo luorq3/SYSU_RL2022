@@ -11,9 +11,9 @@ def dqn_arguments(parser):
 
     parser.add_argument("--seed", default=11037, type=int)
     parser.add_argument("--hidden_size", default=512, type=int)
-    parser.add_argument("--buffer_size", default=int(10000), type=int)
+    parser.add_argument("--buffer_size", default=int(20000), type=int)
     parser.add_argument("--lr", default=0.00025, type=float)
-    parser.add_argument("--batch_size", default=32, type=int)
+    parser.add_argument("--batch_size", default=256, type=int)
     parser.add_argument("--gamma", default=0.99, type=float)
     parser.add_argument("--grad_norm_clip", default=0.5, type=float)
 

@@ -110,6 +110,10 @@ class AgentDQN(Agent):
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
         self.writer = SummaryWriter(f"{self.log_dir}")
+        self.writer.add_text(
+            "hyper-parameters",
+            "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
+        )
 
         self.env = env
         self.device = torch.device("cuda" if torch.cuda.is_available() and args.use_cuda else 'cpu')
@@ -211,13 +215,15 @@ class AgentDQN(Agent):
         episodic_return = 0
 
         obs = self.env.reset()
-        for global_step in range(self.total_timesteps):
+        for global_step in range(1, self.total_timesteps+1):
             episodic_len += 1
 
             action = self.make_action(obs, global_step)
 
             next_obs, reward, done, _ = self.env.step(action)
             episodic_return += reward
+
+            self.replay_buffer.push(obs.copy(), action, reward, next_obs.copy(), done)
 
             if done:
                 self.writer.add_scalar("charts/episodic_return", episodic_return, global_step)
@@ -233,9 +239,7 @@ class AgentDQN(Agent):
             else:
                 obs = next_obs
 
-            self.replay_buffer.push(obs, action, reward, next_obs.copy(), done)
-
-            if global_step > self.learning_starts and global_step % self.learning_freq == 0:
+            if global_step >= self.learning_starts and global_step % self.learning_freq == 0:
                 self.train(global_step)
 
         self.env.close()
