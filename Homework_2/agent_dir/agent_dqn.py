@@ -178,22 +178,26 @@ class AgentDQN(Agent):
             self.target_network.load_state_dict(self.q_network.state_dict())
 
         ##################
-        pass
 
-    def make_action(self, observation, test=True):
+    def make_action(self, obs, global_step, test=True):
         """
         Return predicted action of your agent
         Input:observation
         Return:action
         """
         ##################
-        # YOUR CODE HERE #
-        ##################
-        pass
 
-    def linear_schedule(self, global_step):
         slope = (self.end_e - self.start_e) / self.exploration_step
-        return max(slope * global_step + self.start_e, self.end_e)
+        epsilon = max(slope * global_step + self.start_e, self.end_e)
+
+        if random.random() < epsilon:
+            action = self.env.action_space.sample()
+        else:
+            logits = self.q_network(torch.tensor(obs).unsqueeze(0).to(self.device))
+            action = torch.argmax(logits, dim=1).cpu().numpy()[0]
+
+        return action
+        ##################
 
     def run(self):
         """
@@ -208,12 +212,7 @@ class AgentDQN(Agent):
         for global_step in range(self.total_timesteps):
             episodic_len += 1
 
-            epsilon = self.linear_schedule(global_step)
-            if random.random() < epsilon:
-                action = self.env.action_space.sample()
-            else:
-                logits = self.q_network(torch.tensor(obs).unsqueeze(0).to(self.device))
-                action = torch.argmax(logits, dim=1).cpu().numpy()[0]
+            action = self.make_action(obs, global_step)
 
             next_obs, reward, done, _ = self.env.step(action)
             episodic_return += reward
