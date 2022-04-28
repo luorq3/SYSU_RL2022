@@ -64,7 +64,7 @@ def ddpg_arguments(parser):
     parser.add_argument('--env_name', default="LunarLanderContinuous-v2", help='environment name')
     parser.add_argument("--total_timesteps", type=int, default=1000000)
     parser.add_argument("--learning_rate", type=float, default=3e-4)
-    parser.add_argument("--buffer_size", type=int, default=int(1e6))
+    parser.add_argument("--buffer_size", default=int(20000), type=int)
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--tau", type=float, default=0.005)
     parser.add_argument("--max_grad_norm", type=float, default=0.5)

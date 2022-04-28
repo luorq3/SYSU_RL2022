@@ -42,4 +42,5 @@ def run(args):
 
 if __name__ == '__main__':
     args = parse()
-    run(args)
+    # run(args)
+    env = gym.make(args.env_name)
