@@ -129,6 +129,7 @@ class AgentDQN(Agent):
         self.exploration_step = args.exploration_fraction * self.total_timesteps
         self.learning_starts = args.learning_starts
 
+        self.env.seed(args.seed)
         random.seed(args.seed)
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
