@@ -1,8 +1,51 @@
 import collections
+import time
+
 import numpy as np
 import gym.spaces
 import gym
 import cv2
+
+
+class RecordEpisodeStatistics(gym.Wrapper):
+    def __init__(self, env):
+        super(RecordEpisodeStatistics, self).__init__(env)
+        self.t0 = time.perf_counter()
+        self.episode_count = 0
+        self.episode_return = 0
+        self.episode_length = 0
+
+    def reset(self):
+        observation = super(RecordEpisodeStatistics, self).reset()
+        self.episode_return = 0
+        self.episode_length = 0
+        return observation
+
+    def step(self, action):
+        observation, reward, done, info = super(RecordEpisodeStatistics, self).step(action)
+        self.episode_return += reward
+        self.episode_length += 1
+
+        if done:
+            if not isinstance(info, dict):
+                info = {}
+
+            self.episode_count += 1
+            episode_info = {
+                "r": self.episode_return,
+                "l": self.episode_length,
+                "t": round(time.perf_counter() - self.t0, 6),
+                "c": self.episode_count
+            }
+            info["episode"] = episode_info
+            self.episode_return = 0
+            self.episode_length = 0
+        return (
+            observation,
+            reward,
+            done,
+            info,
+        )
 
 
 class FireResetEnv(gym.Wrapper):
@@ -112,6 +155,7 @@ class ScaledFloatFrame(gym.ObservationWrapper):
 
 def make_env(env_name):
     env = gym.make(env_name)
+    env = RecordEpisodeStatistics(env)
     env = MaxAndSkipEnv(env)
     env = FireResetEnv(env)
     env = ProcessFrame84(env)

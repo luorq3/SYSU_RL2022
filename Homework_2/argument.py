@@ -19,7 +19,7 @@ def dqn_arguments(parser):
 
     parser.add_argument("--test", default=False, type=bool)
     parser.add_argument("--use_cuda", default=True, type=bool)
-    parser.add_argument("--total_timesteps", default=int(4000000), type=int)
+    parser.add_argument("--total_timesteps", default=int(1000000), type=int)
     parser.add_argument("--learning_freq", default=1, type=int)
     parser.add_argument("--target_update_freq", default=1000, type=int)
 

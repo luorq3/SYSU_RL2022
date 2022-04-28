@@ -212,29 +212,27 @@ class AgentDQN(Agent):
         """
         ##################
 
-        episodic_len = 0
-        episodic_return = 0
-
         obs = self.env.reset()
         for global_step in range(1, self.total_timesteps+1):
-            episodic_len += 1
 
             action = self.make_action(obs, global_step)
 
-            next_obs, reward, done, _ = self.env.step(action)
-            episodic_return += reward
+            next_obs, reward, done, info = self.env.step(action)
 
             self.replay_buffer.push(obs.copy(), action, reward, next_obs.copy(), done)
 
             if done:
+                episodic_return = info['episode']['r']
+                episodic_len = info['episode']['l']
+                episodic_time = info['episode']['t']
+                episode_count = info['episode']['c']
+
                 self.writer.add_scalar("charts/episodic_return", episodic_return, global_step)
                 self.writer.add_scalar("charts/episodic_length", episodic_len, global_step)
 
                 print(f"global_step={global_step}, episodic_return={episodic_return}, "
-                      f"episodic_len={episodic_len}")
-
-                episodic_len = 0
-                episodic_return = 0
+                      f"episodic_len={episodic_len}, episodic_time={episodic_time},"
+                      f"episode_count={episode_count}")
 
                 obs = self.env.reset()
             else:
