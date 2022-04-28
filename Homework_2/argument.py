@@ -73,3 +73,5 @@ def ddpg_arguments(parser):
     parser.add_argument("--learning_starts", type=int, default=25e3)
     parser.add_argument("--policy_frequency", type=int, default=2)
     parser.add_argument("--noise_clip", type=float, default=0.5)
+
+    return parser
