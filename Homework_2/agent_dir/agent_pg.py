@@ -21,7 +21,7 @@ class PGNetwork(nn.Module):
     def forward(self, inputs):
         ##################
         x = F.relu(self.fc1(inputs))
-        x = F.softmax(self.fc2(x))
+        x = F.softmax(self.fc2(x), dim=1)
         return x
         ##################
 
@@ -98,12 +98,12 @@ class AgentPG(Agent):
         Return: action
         """
         ##################
-        logits = self.pg_network(torch.tensor(obs).unsqueeze(0).to(self.device)).cpu().numpy()[0]
+        logits = self.pg_network(torch.tensor(obs).unsqueeze(0).to(self.device))[0]
         if test:
-            return logits.argmax()
+            return logits.argmax().item()
 
-        action = Categorical(logits).sample()
-        prob = logits[action]
+        action = Categorical(logits).sample().item()
+        prob = logits[action].item()
 
         return action, prob
         ##################
