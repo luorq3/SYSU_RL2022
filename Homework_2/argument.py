@@ -53,7 +53,7 @@ def pg_arguments(parser):
 
     parser.add_argument("--test", default=False, type=bool)
     parser.add_argument("--use_cuda", default=True, type=bool)
-    parser.add_argument("--n_frames", default=int(30000), type=int)
+    parser.add_argument("--total_timesteps", default=int(30000), type=int)
 
     return parser
 
