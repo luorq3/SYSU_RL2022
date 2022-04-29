@@ -105,8 +105,8 @@ class AgentDQN(Agent):
         super(AgentDQN, self).__init__(env)
         ##################
         str_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        self.run_name = f"{args.env_name}_dqn_{str_time}"
-        self.log_dir = f'logs/{self.run_name}'
+        self.run_name = f"{args.seed}_dqn_{str_time}"
+        self.log_dir = f'logs/{args.env_name}/{self.run_name}'
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
         self.writer = SummaryWriter(f"{self.log_dir}")
