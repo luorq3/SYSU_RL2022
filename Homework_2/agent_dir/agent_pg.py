@@ -88,10 +88,9 @@ class AgentPG(Agent):
             loss.backward()
         self.optimizer.step()
         self.replay_buffer = []
-
         ##################
 
-    def make_action(self, obs, test=True):
+    def make_action(self, obs, test=False):
         """
         Return predicted action of your agent
         Input:observation
