@@ -1,9 +1,10 @@
 import os
+from datetime import datetime
 import random
-import copy
 import numpy as np
 import torch
-from pathlib import Path
+import torch.nn.functional as F
+from torch.distributions import Categorical
 from tensorboardX import SummaryWriter
 from torch import nn, optim
 from agent_dir.agent import Agent
@@ -13,53 +14,16 @@ class PGNetwork(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(PGNetwork, self).__init__()
         ##################
-        # YOUR CODE HERE #
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, output_size)
         ##################
-        pass
 
     def forward(self, inputs):
         ##################
-        # YOUR CODE HERE #
+        x = F.relu(self.fc1(inputs))
+        x = F.softmax(self.fc2(x))
+        return x
         ##################
-        pass
-
-
-class ReplayBuffer:
-    def __init__(self, buffer_size):
-        """
-        Trajectory buffer. It will clear the buffer after updating.
-        """
-        ##################
-        # YOUR CODE HERE #
-        ##################
-        pass
-
-    def __len__(self):
-        ##################
-        # YOUR CODE HERE #
-        ##################
-        pass
-
-    def push(self, *transition):
-        ##################
-        # YOUR CODE HERE #
-        ##################
-        pass
-
-    def sample(self, batch_size):
-        """
-        Sample all the data stored in the buffer
-        """
-        ##################
-        # YOUR CODE HERE #
-        ##################
-        pass
-
-    def clean(self):
-        ##################
-        # YOUR CODE HERE #
-        ##################
-        pass
 
 
 class AgentPG(Agent):
@@ -70,9 +34,34 @@ class AgentPG(Agent):
         """
         super(AgentPG, self).__init__(env)
         ##################
-        # YOUR CODE HERE #
+        str_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        self.run_name = f"{args.env_name}_dqn_{str_time}"
+        self.log_dir = f'logs/{self.run_name}'
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir)
+        self.writer = SummaryWriter(f"{self.log_dir}")
+        self.writer.add_text(
+            "hyper-parameters",
+            "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
+        )
+
+        self.env = env
+        self.device = torch.device("cuda" if torch.cuda.is_available() and args.use_cuda else 'cpu')
+
+        self.total_timesteps = args.total_timesteps
+        self.gamma = args.gamma
+
+        self.env.seed(args.seed)
+        random.seed(args.seed)
+        np.random.seed(args.seed)
+        torch.manual_seed(args.seed)
+
+        self.pg_network = PGNetwork(np.prod(self.env.observation_space.shape), args.hidden_size, self.env.action_space.n).to(self.device)
+        self.optimizer = optim.Adam(self.pg_network.parameters(), lr=args.lr)
+
+        self.replay_buffer = []
+
         ##################
-        pass
 
     def init_game_setting(self):
         """
@@ -91,26 +80,68 @@ class AgentPG(Agent):
         Implement your training algorithm here
         """
         ##################
-        # YOUR CODE HERE #
-        ##################
-        pass
+        discount_return = 0
+        self.optimizer.zero_grad()
+        for reward, prob in self.replay_buffer[::-1]:
+            discount_return = reward + self.gamma * discount_return
+            loss = -torch.log(prob) * discount_return
+            loss.backward()
+        self.optimizer.step()
+        self.replay_buffer = []
 
-    def make_action(self, observation, test=True):
+        ##################
+
+    def make_action(self, obs, test=True):
         """
         Return predicted action of your agent
         Input:observation
         Return: action
         """
         ##################
-        # YOUR CODE HERE #
+        logits = self.pg_network(torch.tensor(obs).unsqueeze(0).to(self.device)).cpu().numpy()[0]
+        if test:
+            return logits.argmax()
+
+        action = Categorical(logits).sample()
+        prob = logits[action]
+
+        return action, prob
         ##################
-        pass
 
     def run(self):
         """
         Implement the interaction between agent and environment here
         """
         ##################
-        # YOUR CODE HERE #
+        episodic_len = 0
+        episodic_return = 0
+
+        obs = self.env.reset()
+        for global_step in range(1, self.total_timesteps + 1):
+            episodic_len += 1
+
+            action, prob = self.make_action(obs)
+            next_obs, reward, done, _ = self.env.step(action)
+            episodic_return += reward
+
+            self.replay_buffer.append((reward, prob))
+
+            if done:
+                self.writer.add_scalar("charts/episodic_return", episodic_return, global_step)
+                self.writer.add_scalar("charts/episodic_length", episodic_len, global_step)
+
+                print(f"global_step={global_step}, episodic_return={episodic_return}, "
+                      f"episodic_len={episodic_len}")
+
+                self.train()
+
+                episodic_len = 0
+                episodic_return = 0
+
+                obs = self.env.reset()
+            else:
+                obs = next_obs
+
+        self.env.close()
+        self.writer.close()
         ##################
-        pass
