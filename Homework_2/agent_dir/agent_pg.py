@@ -35,7 +35,7 @@ class AgentPG(Agent):
         super(AgentPG, self).__init__(env)
         ##################
         str_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        self.run_name = f"{args.seed}_dqn_{str_time}"
+        self.run_name = f"{args.seed}_pg_{str_time}"
         self.log_dir = f'logs/{args.env_name}/{self.run_name}'
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
