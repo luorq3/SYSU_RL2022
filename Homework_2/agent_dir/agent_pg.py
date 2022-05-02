@@ -50,6 +50,7 @@ class AgentPG(Agent):
 
         self.total_timesteps = args.total_timesteps
         self.gamma = args.gamma
+        self.grad_norm_clip = args.grad_norm_clip
 
         self.env.seed(args.seed)
         random.seed(args.seed)
@@ -86,6 +87,7 @@ class AgentPG(Agent):
             discount_return = reward + self.gamma * discount_return
             loss = -torch.log(prob) * discount_return
             loss.backward()
+        nn.utils.clip_grad_norm_(list(self.pg_network.parameters()), self.grad_norm_clip)
         self.optimizer.step()
         self.replay_buffer = []
         ##################

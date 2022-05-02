@@ -130,9 +130,12 @@ class AgentDQN(Agent):
         self.learning_starts = args.learning_starts
 
         self.env.seed(args.seed)
+        self.env.action_space.seed(args.seed)
+        self.env.observation_space.seed(args.seed)
         random.seed(args.seed)
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
+        torch.backends.cudnn.deterministic = args.torch_deterministic
 
         self.q_network = QNetwork(args.hidden_size, env.action_space.n).to(self.device)
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=args.lr)
