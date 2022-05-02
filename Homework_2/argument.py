@@ -10,12 +10,13 @@ def dqn_arguments(parser):
     parser.add_argument('--env_name', default="BreakoutNoFrameskip-v4", help='environment name')
 
     parser.add_argument("--seed", default=11037, type=int)
+    parser.add_argument("--torch_deterministic", default=True, type=bool)
     parser.add_argument("--hidden_size", default=512, type=int)
     parser.add_argument("--buffer_size", default=int(20000), type=int)
     parser.add_argument("--lr", default=0.00025, type=float)
-    parser.add_argument("--batch_size", default=256, type=int)
+    parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--gamma", default=0.99, type=float)
-    parser.add_argument("--grad_norm_clip", default=0.5, type=float)
+    parser.add_argument("--grad_norm_clip", default=5, type=float)
 
     parser.add_argument("--test", default=False, type=bool)
     parser.add_argument("--use_cuda", default=True, type=bool)
