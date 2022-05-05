@@ -7,7 +7,9 @@ def dqn_arguments(parser):
         parser.add_argument('--batch_size', type=int, default=32, help='batch size for training')
         parser.add_argument('--learning_rate', type=float, default=0.01, help='learning rate for training')
     """
-    parser.add_argument('--env_name', default="BreakoutNoFrameskip-v4", help='environment name')
+    parser.add_argument('--env_name', default="PongNoFrameskip-v4", help='environment name')
+    parser.add_argument('--double_dqn', default=True, type=bool)
+    parser.add_argument('--dueling_dqn', default=True, type=bool)
 
     parser.add_argument("--seed", default=11037, type=int)
     parser.add_argument("--torch_deterministic", default=True, type=bool)

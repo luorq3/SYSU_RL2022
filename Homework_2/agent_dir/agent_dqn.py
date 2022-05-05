@@ -11,10 +11,11 @@ from agent_dir.agent import Agent
 
 
 class QNetwork(nn.Module):
-    def __init__(self, hidden_size, output_size):
+    def __init__(self, hidden_size, output_size, dueling_dqn=True):
         super(QNetwork, self).__init__()
         ##################
-        self.network = nn.Sequential(
+        self.dueling_dqn = dueling_dqn
+        self.model = nn.Sequential(
             nn.Conv2d(in_channels=4, out_channels=32, kernel_size=(8, 8), stride=(4, 4)),
             nn.ReLU(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(4, 4), stride=(2, 2)),
@@ -23,14 +24,21 @@ class QNetwork(nn.Module):
             nn.ReLU(),
             nn.Flatten(),
             nn.Linear(3136, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, output_size),
+            nn.ReLU()
         )
+        self.q = nn.Linear(hidden_size, output_size)
+        self.v = nn.Linear(hidden_size, 1)
         ##################
 
     def forward(self, inputs):
         ##################
-        return self.network(inputs)
+        logits = self.model(inputs)
+
+        if self.dueling_dqn:
+            q, v = self.q(logits), self.v(logits)
+            return q - q.mean(dim=1, keepdim=True) + v
+
+        return self.q(logits)
         ##################
 
 
@@ -115,6 +123,10 @@ class AgentDQN(Agent):
             "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
         )
 
+        # Algo config: double DQN / Dueling DQN
+        self.double_dqn = args.double_dqn
+        self.dueling_dqn = args.dueling_dqn
+
         self.env = env
         self.device = torch.device("cuda" if torch.cuda.is_available() and args.use_cuda else 'cpu')
 
@@ -123,7 +135,6 @@ class AgentDQN(Agent):
         self.gamma = args.gamma
         self.learning_freq = args.learning_freq
         self.grad_norm_clip = args.grad_norm_clip
-        self.target_update_freq = args.target_update_freq
         self.start_e = args.start_e
         self.end_e = args.end_e
         self.exploration_step = args.exploration_fraction * self.total_timesteps
@@ -137,10 +148,14 @@ class AgentDQN(Agent):
         torch.manual_seed(args.seed)
         torch.backends.cudnn.deterministic = args.torch_deterministic
 
-        self.q_network = QNetwork(args.hidden_size, env.action_space.n).to(self.device)
+        self.q_network = QNetwork(args.hidden_size, env.action_space.n, self.dueling_dqn).to(self.device)
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=args.lr)
-        self.target_network = QNetwork(args.hidden_size, env.action_space.n).to(self.device)
-        self.target_network.load_state_dict(self.q_network.state_dict())
+
+        # If double_dqn is True
+        if self.double_dqn:
+            self.target_update_freq = args.target_update_freq
+            self.target_network = QNetwork(args.hidden_size, env.action_space.n, self.dueling_dqn).to(self.device)
+            self.target_network.load_state_dict(self.q_network.state_dict())
 
         self.replay_buffer = ReplayBuffer(args.buffer_size, self.env.observation_space, self.env.action_space, self.device)
 
@@ -165,7 +180,10 @@ class AgentDQN(Agent):
         ##################
         observations, actions, rewards, next_observations, dones = self.replay_buffer.sample(self.batch_size)
         with torch.no_grad():
-            target_max, _ = self.target_network(next_observations).max(dim=1)
+            if self.double_dqn:
+                target_max, _ = self.target_network(next_observations).max(dim=1)
+            else:
+                target_max, _ = self.q_network(next_observations).max(dim=1)
             td_target = rewards + self.gamma * target_max * (1 - dones)
 
         actions = actions.unsqueeze(dim=1)
@@ -182,7 +200,7 @@ class AgentDQN(Agent):
         self.optimizer.step()
 
         # update the target network
-        if global_step % self.target_update_freq == 0:
+        if self.double_dqn and global_step % self.target_update_freq == 0:
             self.target_network.load_state_dict(self.q_network.state_dict())
 
         ##################
