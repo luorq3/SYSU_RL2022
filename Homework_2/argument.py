@@ -51,6 +51,7 @@ def pg_arguments(parser):
     parser.add_argument("--seed", default=11037, type=int)
     parser.add_argument("--hidden_size", default=16, type=int)
     parser.add_argument("--lr", default=0.02, type=float)
+    parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--gamma", default=0.99, type=float)
     parser.add_argument("--grad_norm_clip", default=10, type=float)
 
