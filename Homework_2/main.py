@@ -35,7 +35,8 @@ def run(args):
 
     if args.train_ddpg:
         env_name = args.env_name
-        env = make_env(env_name)
+        # env = make_env(env_name)
+        env = gym.make(env_name)
         from agent_dir.agent_ddpg import AgentDDPG
         agent = AgentDDPG(env, args)
         agent.run()

@@ -73,6 +73,7 @@ def ddpg_arguments(parser):
     parser.add_argument("--tau", type=float, default=0.005)
     parser.add_argument("--max_grad_norm", type=float, default=0.5)
     parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--hidden_size", type=int, default=256)
     parser.add_argument("--exploration_noise", type=float, default=0.1)
     parser.add_argument("--learning_starts", type=int, default=25e3)
     parser.add_argument("--policy_frequency", type=int, default=2)

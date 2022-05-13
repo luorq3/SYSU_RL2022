@@ -9,7 +9,69 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from torch import nn, optim
 from agent_dir.agent import Agent
-from agent_dir.agent_dqn import ReplayBuffer
+
+
+class ReplayBuffer:
+    def __init__(self, buffer_size, observation_space, action_space, device):
+        ##################
+        self.buffer_size = buffer_size
+
+        self.obs_shape = observation_space.shape
+        self.act_shape = action_space.shape
+
+        self.observations = np.zeros((self.buffer_size,) + self.obs_shape, dtype=observation_space.dtype)
+        self.actions = np.zeros((self.buffer_size,) + self.act_shape, dtype=action_space.dtype)
+        self.rewards = np.zeros(self.buffer_size, dtype=np.float32)
+        self.next_observations = np.zeros((self.buffer_size,) + self.obs_shape, dtype=observation_space.dtype)
+        self.dones = np.zeros(self.buffer_size, dtype=np.float32)
+
+        self.pos = 0
+        self.full = False
+        self.device = device
+        ##################
+
+    def __len__(self):
+        ##################
+        if self.full:
+            return self.buffer_size
+        return self.pos
+        ##################
+
+    def push(self, *transition):
+        ##################
+        self.observations[self.pos] = np.array(transition[0]).copy()
+        self.actions[self.pos] = np.array(transition[1]).copy()
+        self.rewards[self.pos] = np.array(transition[2]).copy()
+        self.next_observations[self.pos] = np.array(transition[3]).copy()
+        self.dones[self.pos] = np.array(transition[4]).copy()
+
+        self.pos += 1
+        if self.pos == self.buffer_size:
+            self.full = True
+            self.pos = 0
+        ##################
+
+    def sample(self, batch_size):
+        ##################
+        upper_bound = self.buffer_size if self.full else self.pos
+        batch_idx = np.random.randint(0, upper_bound, size=batch_size)
+
+        data = (
+            self.observations[batch_idx, :],
+            self.actions[batch_idx],
+            self.rewards[batch_idx],
+            self.next_observations[batch_idx, :],
+            self.dones[batch_idx]
+        )
+
+        return [torch.tensor(d).to(self.device) for d in data]
+        ##################
+
+    def clean(self):
+        ##################
+        self.full = False
+        self.pos = 0
+        ##################
 
 
 class QNetwork(nn.Module):
@@ -32,10 +94,10 @@ class QNetwork(nn.Module):
 
 
 class Actor(nn.Module):
-    def __init__(self, action_shape, hidden_size):
+    def __init__(self, observation_shape, action_shape, hidden_size):
         super(Actor, self).__init__()
         ##################
-        self.fc1 = nn.Linear(np.array(action_shape).prod(), hidden_size)
+        self.fc1 = nn.Linear(np.array(observation_shape).prod(), hidden_size)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
         self.fc3 = nn.Linear(hidden_size, np.array(action_shape).prod())
         ##################
@@ -87,8 +149,8 @@ class AgentDDPG(Agent):
         self.policy_frequency = args.policy_frequency
 
         self.max_action = float(env.action_space.high[0])
-        self.actor = Actor(env.action_space.shape, args.hidden_size).to(self.device)
-        self.target_actor = Actor(env.action_space.shape, args.hidden_size).to(self.device)
+        self.actor = Actor(env.observation_space.shape, env.action_space.shape, args.hidden_size).to(self.device)
+        self.target_actor = Actor(env.observation_space.shape, env.action_space.shape, args.hidden_size).to(self.device)
         self.target_actor.load_state_dict(self.actor.state_dict())
         self.qv = QNetwork(env.observation_space.shape, env.action_space.shape, args.hidden_size).to(self.device)
         self.target_qv = QNetwork(env.observation_space.shape, env.action_space.shape, args.hidden_size).to(self.device)
@@ -96,7 +158,7 @@ class AgentDDPG(Agent):
         self.actor_optimizer = optim.Adam(list(self.actor.parameters()), lr=args.learning_rate)
         self.qv_optimizer = optim.Adam(list(self.qv.parameters()), lr=args.learning_rate)
 
-        self.replay_buffer = ReplayBuffer(args.buffer_size, self.envs.single_observation_space, self.envs.single_action_space, device=self.device)
+        self.replay_buffer = ReplayBuffer(args.buffer_size, self.env.observation_space, self.env.action_space, device=self.device)
         ##################
 
     def init_game_setting(self):
@@ -157,12 +219,12 @@ class AgentDDPG(Agent):
         ##################
 
         if test:
-            return self.actor(torch.Tensor(obs).unsqueeze(dim=0)).tolist()[0]
+            return self.actor(torch.Tensor(obs).unsqueeze(dim=0).to(self.device)).tolist()[0]
 
         if global_step >= self.learning_starts:
             action = self.env.sample()
         else:
-            action = self.actor(torch.Tensor(obs).unsqueeze(dim=0)).tolist()[0]
+            action = self.actor(torch.Tensor(obs).unsqueeze(dim=0).to(self.device)).tolist()[0]
             noise = np.random.normal(0, self.max_action * self.exploration_noise, self.env.action_space.shape)
             action = (action + noise).clip(min=self.env.action_space.low, max=self.env.action_space.high)
 
